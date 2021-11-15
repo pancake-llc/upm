@@ -1,0 +1,24 @@
+{
+  "name": "com.snorlax.upm",
+  "displayName": "UPM",
+  "description": "Provide easy way to control github package in unity 3d",
+  "version": "1.0.0",
+  "unity": "2019.1",
+  "category": "snorlax",
+  "author": {
+    "name": "yenmoc",
+    "email": "phongsoyenmoc.diep@gmail.com",
+    "url": "https://github.com/yenmoc"
+  },
+  "license": "MIT",
+  "keywords": [ "upm","unity","github","package" ],
+  "dependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:snorluxe/common.git",
+    "directory": "com.snorlax.upm"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com/@snorluxe"
+  }
+}
