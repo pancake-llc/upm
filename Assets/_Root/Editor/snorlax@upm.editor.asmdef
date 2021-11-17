@@ -1,7 +1,9 @@
 {
     "name": "snorlax@upm.editor",
     "rootNamespace": "",
-    "references": [],
+    "references": [
+        "GUID:c7f2f2911de381941be7186214305448"
+    ],
     "includePlatforms": [
         "Editor"
     ],
