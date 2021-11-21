@@ -1,5 +1,12 @@
 {
   "dependencies": {
+    "com.snorlax.html-agility-pack": {
+      "version": "1.11.38",
+      "depth": 0,
+      "source": "registry",
+      "dependencies": {},
+      "url": "https://npm.pkg.github.com/@snorluxe"
+    },
     "com.snorlax.semver": {
       "version": "0.3.5",
       "depth": 0,
@@ -31,7 +38,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.ide.visualstudio": {
-      "version": "2.0.11",
+      "version": "2.0.12",
       "depth": 0,
       "source": "registry",
       "dependencies": {

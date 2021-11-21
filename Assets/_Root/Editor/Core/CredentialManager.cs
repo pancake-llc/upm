@@ -18,16 +18,15 @@ namespace com.snorlax.upm
 
     public class CredentialManager
     {
-        private string _upmconfigFile = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".upmconfig.toml");
-        private List<NpmCredential> _credentials = new List<NpmCredential>();
+        public static readonly string UpmconfigFile = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".upmconfig.toml");
 
-        public List<NpmCredential> CredentialSet { get { return _credentials; } }
+        public List<NpmCredential> CredentialSet { get; } = new();
 
-        public String[] Registries
+        public string[] Registries
         {
             get
             {
-                var urls = new String[_credentials.Count];
+                var urls = new string[CredentialSet.Count];
                 var index = 0;
                 foreach (var cred in CredentialSet)
                 {
@@ -41,9 +40,9 @@ namespace com.snorlax.upm
 
         public CredentialManager()
         {
-            if (File.Exists(_upmconfigFile))
+            if (File.Exists(UpmconfigFile))
             {
-                var upmconfig = Toml.Parse(File.ReadAllText(_upmconfigFile));
+                var upmconfig = Toml.Parse(File.ReadAllText(UpmconfigFile));
                 if (upmconfig.HasErrors)
                 {
                     Debug.LogError("Cannot load upmconfig, invalid format");
@@ -64,7 +63,7 @@ namespace com.snorlax.upm
                             cred.token = (string)value["token"];
                             cred.alwaysAuth = (bool)value["alwaysAuth"];
 
-                            _credentials.Add(cred);
+                            CredentialSet.Add(cred);
                         }
                     }
                 }
@@ -75,7 +74,7 @@ namespace com.snorlax.upm
         {
             var doc = new DocumentSyntax();
 
-            foreach (var credential in _credentials)
+            foreach (var credential in CredentialSet)
             {
                 if (string.IsNullOrEmpty(credential.token))
                 {
@@ -89,12 +88,12 @@ namespace com.snorlax.upm
             }
 
 
-            File.WriteAllText(_upmconfigFile, doc.ToString());
+            File.WriteAllText(UpmconfigFile, doc.ToString());
         }
 
-        public bool HasRegistry(string url) { return _credentials.Any(x => x.url.Equals(url, StringComparison.Ordinal)); }
+        public bool HasRegistry(string url) { return CredentialSet.Any(x => x.url.Equals(url, StringComparison.Ordinal)); }
 
-        public NpmCredential GetCredential(string url) { return _credentials.FirstOrDefault(x => x.url?.Equals(url, StringComparison.Ordinal) ?? false); }
+        public NpmCredential GetCredential(string url) { return CredentialSet.FirstOrDefault(x => x.url?.Equals(url, StringComparison.Ordinal) ?? false); }
 
         public void SetCredential(string url, bool alwaysAuth, string token)
         {
@@ -109,7 +108,7 @@ namespace com.snorlax.upm
             {
                 var newCred = new NpmCredential { url = url, alwaysAuth = alwaysAuth, token = token };
 
-                _credentials.Add(newCred);
+                CredentialSet.Add(newCred);
             }
         }
 
@@ -117,7 +116,7 @@ namespace com.snorlax.upm
         {
             if (HasRegistry(url))
             {
-                _credentials.RemoveAll(x => x.url.Equals(url, StringComparison.Ordinal));
+                CredentialSet.RemoveAll(x => x.url.Equals(url, StringComparison.Ordinal));
             }
         }
     }

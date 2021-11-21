@@ -81,8 +81,8 @@ namespace com.snorlax.upm
             foreach (var jRegistryElement in jregistries)
             {
                 if (jRegistryElement["name"] != null && jRegistryElement["url"] != null &&
-                    String.Equals(jRegistryElement["name"].Value<string>(), registry.name, StringComparison.Ordinal) &&
-                    String.Equals(jRegistryElement["url"].Value<string>(), registry.url, StringComparison.Ordinal))
+                    string.Equals(jRegistryElement["name"].Value<string>(), registry.name, StringComparison.Ordinal) &&
+                    string.Equals(jRegistryElement["url"].Value<string>(), registry.url, StringComparison.Ordinal))
                 {
                     UpdateScope(registry, jRegistryElement);
                     return jRegistryElement;

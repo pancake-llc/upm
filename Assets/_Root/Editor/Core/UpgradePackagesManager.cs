@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Threading;
 using Artees.UnitySemVer;
@@ -76,7 +75,7 @@ namespace com.snorlax.upm
                         }
                     }
 
-                    _hasVerified = !String.IsNullOrWhiteSpace(info.versions.verified);
+                    _hasVerified = !string.IsNullOrWhiteSpace(info.versions.verified);
                     if (_hasVerified)
                     {
                         try
@@ -99,19 +98,13 @@ namespace com.snorlax.upm
             internal string GetCurrentVersion() { return info.packageId; }
 
             public PackageInfo info;
-
             private SemVer _current;
-
             private bool _previewAvailable;
             private SemVer _previewVersion;
-
             private string _preview;
-
             private bool _stableAvailable;
             private SemVer _stableVersion;
-
             private string _stable;
-
             private bool _hasVerified;
             private bool _verifiedAvailable;
             private SemVer _verifiedVersion;
@@ -164,7 +157,7 @@ namespace com.snorlax.upm
             }
         }
 
-        public List<PackageUpgradeState> upgradeablePackages = new List<PackageUpgradeState>();
+        public List<PackageUpgradeState> upgradeablePackages = new();
 
         private ListRequest _request;
 
@@ -201,7 +194,7 @@ namespace com.snorlax.upm
         }
 
 
-        public bool UpgradePackage(String packageWithVersion, ref string error)
+        public bool UpgradePackage(string packageWithVersion, ref string error)
         {
             var request = Client.Add(packageWithVersion);
 

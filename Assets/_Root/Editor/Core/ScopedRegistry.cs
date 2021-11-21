@@ -9,7 +9,7 @@ namespace com.snorlax.upm
     {
         public string name;
         public string url;
-        public List<string> scopes = new List<string>();
+        public List<string> scopes = new();
 
         public bool auth;
 

@@ -29,8 +29,7 @@ namespace com.snorlax.upm
                 drawHeaderCallback = rect => { GUI.Label(rect, "User Credentials on this computer"); },
                 drawElementCallback = (rect, index, _, _) =>
                 {
-                    var credential = credentialList.list[index] as NpmCredential;
-                    if (credential == null) return;
+                    if (credentialList.list[index] is not NpmCredential credential) return;
 
                     rect.width -= 60;
                     EditorGUI.LabelField(rect, credential.url);

@@ -7,21 +7,12 @@ namespace com.snorlax.upm
     internal class CredentialEditorView : EditorWindow
     {
         private bool _initialized;
-
         private CredentialManager _credentialManager;
-
         private bool _createNew;
 
         private ScopedRegistry _registry;
 
-        private int _tokenMethod;
-
-
-        private void OnEnable()
-        {
-            _tokenMethod = 0;
-            minSize = new Vector2(480, 320);
-        }
+        private void OnEnable() { minSize = new Vector2(480, 320); }
 
         private void OnDisable() { _initialized = false; }
 
@@ -69,13 +60,6 @@ namespace com.snorlax.upm
                 EditorGUILayout.Space();
 
                 EditorGUI.BeginDisabledGroup(string.IsNullOrEmpty(_registry.url));
-                _tokenMethod = GetTokenView.CreateGUI(_tokenMethod, _registry);
-
-                if (!string.IsNullOrEmpty(_registry.url) && string.IsNullOrEmpty(_registry.token))
-                {
-                    EditorGUILayout.HelpBox("Select an authentication method and click on \"Get token\"", MessageType.Warning);
-                }
-
                 EditorGUI.BeginDisabledGroup(string.IsNullOrEmpty(_registry.token));
 
                 EditorGUILayout.Space();

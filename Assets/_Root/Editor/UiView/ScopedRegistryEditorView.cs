@@ -7,21 +7,12 @@ namespace com.snorlax.upm
     internal class ScopedRegistryEditorView : EditorWindow
     {
         private bool _initialized;
-
         private RegistryManager _controller;
-
         private bool _createNew;
-
         private ScopedRegistry _registry;
 
-        private int _tokenMethod;
 
-        private void OnEnable()
-        {
-            _tokenMethod = 0;
-
-            minSize = new Vector2(480, 320);
-        }
+        private void OnEnable() { minSize = new Vector2(480, 320); }
 
         private void OnDisable() { _initialized = false; }
 
@@ -96,10 +87,6 @@ namespace com.snorlax.upm
                 _registry.token = EditorGUILayout.TextField("Token", _registry.token);
 
                 EditorGUILayout.Space();
-
-                _tokenMethod = GetTokenView.CreateGUI(_tokenMethod, _registry);
-
-                EditorGUILayout.Space();
                 EditorGUILayout.BeginVertical(GUILayout.ExpandHeight(true));
                 EditorGUILayout.EndVertical();
 
@@ -126,6 +113,13 @@ namespace com.snorlax.upm
                     GUIUtility.ExitGUI();
                 }
 
+                GUI.color = new Color(1f, 0.31f, 0.4f);
+                if (GUILayout.Button("Reset To Default"))
+                {
+                    ResetToDefault();
+                }
+
+                GUI.color = Color.white;
                 EditorGUILayout.EndHorizontal();
             }
         }
@@ -156,6 +150,16 @@ namespace com.snorlax.upm
             {
                 EditorUtility.DisplayDialog("Invalid", "Invalid settings for registry.", "Ok");
             }
+        }
+
+        private void ResetToDefault()
+        {
+            _registry.name = "Snorlax";
+            _registry.url = "https://npm.pkg.github.com/@snorluxe";
+            _registry.scopes.Clear();
+            _registry.scopes.Add("com.snorlax");
+            _registry.auth = true;
+            _registry.token = "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";
         }
 
         private void UpdateCredential()
