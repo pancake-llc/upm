@@ -3,15 +3,13 @@ using System.IO;
 using HtmlAgilityPack;
 using Tomlyn;
 using Tomlyn.Model;
-using UnityEditor;
 using UnityEngine;
 
 namespace com.snorlax.upm
 {
     public class GithubResponse
     {
-        [MenuItem("Packages/Get All", false, 20)]
-        public static void GetAllPackages()
+        public static Dictionary<string, Dictionary<string, List<string>>> GetAllPackages()
         {
             var credentialSet = new List<NpmCredential>();
             if (File.Exists(CredentialManager.UpmconfigFile))
@@ -20,7 +18,7 @@ namespace com.snorlax.upm
                 if (upmconfig.HasErrors)
                 {
                     Debug.LogError("Cannot load upmconfig, invalid format");
-                    return;
+                    return null;
                 }
 
                 var table = upmconfig.ToModel();
@@ -44,13 +42,15 @@ namespace com.snorlax.upm
             }
 
             var hrefs = new List<string>();
-            var dictPackage = new Dictionary<string, List<string>>();
+            var dictScoped = new Dictionary<string, Dictionary<string, List<string>>>();
 
             foreach (var credential in credentialSet)
             {
                 hrefs.Clear();
-                dictPackage.Clear();
-                var html = $"https://github.com/orgs/{credential.url.Split('@')[1]}/packages";
+                var dictPackage = new Dictionary<string, List<string>>();
+                string scoped = credential.url.Split('@')[1];
+                dictScoped.Add(scoped, dictPackage);
+                var html = $"https://github.com/orgs/{scoped}/packages";
 
                 var web = new HtmlWeb();
                 var htmlDoc = web.Load(html);
@@ -81,20 +81,9 @@ namespace com.snorlax.upm
                         }
                     }
                 }
-
-                // foreach (var package in dictPackage)
-                // {
-                //     Debug.Log("name: " + package.Key);
-                //     foreach (string s in package.Value)
-                //     {
-                //         Debug.Log(s);
-                //     }
-                //
-                //     Debug.Log("------------------");
-                // }
             }
-        }
 
-        public void HandleFetchPackagesResult(string response) { }
+            return dictScoped;
+        }
     }
 }

@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using UnityEditor;
 using UnityEditor.PackageManager;
@@ -20,39 +22,78 @@ namespace com.snorlax.upm
     // }
     public class BulkAddPackages : EditorWindow
     {
-        private string _packageList = "";
+        private Vector2 _scrollPosition;
+        private Dictionary<string, Dictionary<string, List<string>>> _scopedData = new();
+        private bool[] _foldoutScopes;
+        private List<bool[]> _foldoutPackages;
 
         [MenuItem("Packages/Add packages (bulk)", false, 22)]
         internal static void ManageRegistries() { GetWindow<BulkAddPackages>(true, "Add packages", true); }
 
         private void OnEnable()
         {
-            _packageList = "";
             minSize = new Vector2(640, 320);
+            _scopedData = GithubResponse.GetAllPackages();
+            _foldoutScopes = new bool[_scopedData.Keys.Count];
+            _foldoutPackages = new List<bool[]>(_foldoutScopes.Length);
+
+            for (var i = 0; i < _foldoutScopes.Length; i++)
+            {
+                _foldoutPackages.Add(new bool[_scopedData[_scopedData.Keys.ToList()[i]].Keys.Count]);
+            }
+
+            Debug.Log("OnEnable");
         }
 
         private void OnGUI()
         {
-            EditorGUILayout.LabelField("Add Packages", EditorStyles.whiteLargeLabel);
-            EditorGUILayout.Separator();
-
-            _packageList = EditorGUILayout.TextArea(_packageList, GUILayout.Height(200));
-
-            EditorGUILayout.LabelField("Add multiple packages. Place each package on a newline.");
-            EditorGUILayout.LabelField("Format:.");
-            EditorGUILayout.LabelField("\tLatest version of package: com.halodi.halodi-unity-package-registry-manager");
-            EditorGUILayout.LabelField("\tSpecific version: com.halodi.halodi-unity-package-registry-manager@0.1.0");
-
-
-            EditorGUILayout.BeginHorizontal();
-            if (GUILayout.Button("Add packages"))
+            _scrollPosition = EditorGUILayout.BeginScrollView(_scrollPosition);
+            var index = 0;
+            foreach (string key in _scopedData.Keys)
             {
-                AddPackages();
-                CloseWindow();
+                string scopeTitle = key;
+                if (key.Equals("snorluxe")) scopeTitle = "Snorlax";
+                _foldoutScopes[index] = EditorGUILayout.Foldout(_foldoutScopes[index], scopeTitle, true);
+                EditorGUILayout.Separator();
+
+                if (_foldoutScopes[index])
+                {
+                    EditorGUILayout.BeginVertical();
+
+                    var j = 0;
+                    foreach (string pacakgeName in _scopedData[key].Keys)
+                    {
+                        _foldoutPackages[index][j] = EditorGUILayout.Foldout(_foldoutPackages[index][j], pacakgeName, true);
+                        if (_foldoutPackages[index][j])
+                        {
+                            EditorGUILayout.BeginVertical();
+                            foreach (string version in _scopedData[key][pacakgeName])
+                            {
+                                EditorGUILayout.BeginHorizontal();
+                                GUILayout.FlexibleSpace();
+                                EditorGUILayout.LabelField(version);
+                                EditorGUILayout.EndHorizontal();
+                            }
+
+                            EditorGUILayout.EndVertical();
+                        }
+
+                        ++j;
+                    }
+
+                    EditorGUILayout.EndVertical();
+                }
+
+                ++index;
             }
 
-            if (GUILayout.Button("Close"))
+            EditorGUILayout.EndScrollView();
+
+            EditorGUILayout.BeginHorizontal();
+            GUILayout.FlexibleSpace();
+            if (GUILayout.Button("Install", GUILayout.Width(80)))
             {
+                AddPackages();
                 CloseWindow();
             }
 
@@ -61,46 +102,46 @@ namespace com.snorlax.upm
 
         private void AddPackages()
         {
-            var result = "";
-
-            var hasPackages = false;
-
-            using (var reader = new StringReader(_packageList))
-            {
-                string line;
-                while ((line = reader.ReadLine()) != null)
-                {
-                    if (!string.IsNullOrEmpty(line))
-                    {
-                        var request = Client.Add(line);
-
-                        while (!request.IsCompleted)
-                        {
-                            Thread.Sleep(100);
-                        }
-
-                        if (request.Status == StatusCode.Success)
-                        {
-                            result += "Imported: " + line + Environment.NewLine;
-                        }
-                        else
-                        {
-                            result += "Cannot import " + line + ": " + request.Error.message + Environment.NewLine;
-                        }
-
-                        hasPackages = true;
-                    }
-                }
-            }
-
-            if (hasPackages)
-            {
-                EditorUtility.DisplayDialog("Added packages", "Packages added:" + Environment.NewLine + Environment.NewLine + result, "OK");
-            }
-            else
-            {
-                EditorUtility.DisplayDialog("No packages entered", "No packages entered.", "OK");
-            }
+            // var result = "";
+            //
+            // var hasPackages = false;
+            //
+            // using (var reader = new StringReader(_packageList))
+            // {
+            //     string line;
+            //     while ((line = reader.ReadLine()) != null)
+            //     {
+            //         if (!string.IsNullOrEmpty(line))
+            //         {
+            //             var request = Client.Add(line);
+            //
+            //             while (!request.IsCompleted)
+            //             {
+            //                 Thread.Sleep(100);
+            //             }
+            //
+            //             if (request.Status == StatusCode.Success)
+            //             {
+            //                 result += "Imported: " + line + Environment.NewLine;
+            //             }
+            //             else
+            //             {
+            //                 result += "Cannot import " + line + ": " + request.Error.message + Environment.NewLine;
+            //             }
+            //
+            //             hasPackages = true;
+            //         }
+            //     }
+            // }
+            //
+            // if (hasPackages)
+            // {
+            //     EditorUtility.DisplayDialog("Added packages", "Packages added:" + Environment.NewLine + Environment.NewLine + result, "OK");
+            // }
+            // else
+            // {
+            //     EditorUtility.DisplayDialog("No packages entered", "No packages entered.", "OK");
+            // }
         }
 
         private void CloseWindow()
