@@ -16,7 +16,6 @@ namespace com.snorlax.upm
     // {
     //     internal class InstallPackageCreatorView : EditorWindow
     //     {
-    //         [MenuItem("Packages/Install Halodi Package Creator", false, 41)]
     //         internal static void ManageRegistries() { Client.Add("com.halodi.halodi-unity-package-creator"); }
     //     }
     // }
@@ -25,7 +24,8 @@ namespace com.snorlax.upm
         private Vector2 _scrollPosition;
         private Dictionary<string, Dictionary<string, List<string>>> _scopedData = new();
         private bool[] _foldoutScopes;
-        private List<bool[]> _foldoutPackages;
+        private List<bool[]> _foldoutPackages; // scoped has many package
+        private List<List<bool[]>> _foldoutVersions; //scope has manay package, packge has many version
 
         [MenuItem("Packages/Add packages (bulk)", false, 22)]
         internal static void ManageRegistries() { GetWindow<BulkAddPackages>(true, "Add packages", true); }
@@ -34,12 +34,24 @@ namespace com.snorlax.upm
         {
             minSize = new Vector2(640, 320);
             _scopedData = GithubResponse.GetAllPackages();
-            _foldoutScopes = new bool[_scopedData.Keys.Count];
-            _foldoutPackages = new List<bool[]>(_foldoutScopes.Length);
+            int numberRegistry = _scopedData.Keys.Count;
+            _foldoutScopes = new bool[numberRegistry];
+            _foldoutPackages = new List<bool[]>(numberRegistry);
+            _foldoutVersions = new List<List<bool[]>>(numberRegistry);
 
-            for (var i = 0; i < _foldoutScopes.Length; i++)
+            for (var i = 0; i < numberRegistry; i++)
             {
-                _foldoutPackages.Add(new bool[_scopedData[_scopedData.Keys.ToList()[i]].Keys.Count]);
+                string keyRegistry = _scopedData.Keys.ToList()[i];
+                int numberPackageInScope = _scopedData[keyRegistry].Keys.Count;
+                Debug.Log(numberPackageInScope);
+                _foldoutPackages.Add(new bool[numberPackageInScope]);
+                _foldoutVersions.Add(new List<bool[]>(numberPackageInScope));
+
+                for (var j = 0; j < numberPackageInScope; j++)
+                {
+                    string namePackage = _scopedData[keyRegistry].Keys.ToList()[j];
+                    _foldoutVersions[i].Add(new bool[_scopedData[keyRegistry][namePackage].Count]);
+                }
             }
 
             Debug.Log("OnEnable");
@@ -47,6 +59,50 @@ namespace com.snorlax.upm
 
         private void OnGUI()
         {
+            void ResetState(List<List<bool[]>> stateVersion, int i, int j, int k)
+            {
+                for (int l = 0; l < stateVersion.Count; l++)
+                {
+                    if (l != i)
+                    {
+                        for (var m = 0; m < stateVersion[l].Count; m++)
+                        {
+                            for (var n = 0; n < stateVersion[l][m].Length; n++)
+                            {
+                                stateVersion[l][m][n] = false;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        for (var m = 0; m < stateVersion[l].Count; m++)
+                        {
+                            if (m != j)
+                            {
+                                for (var n = 0; n < stateVersion[i][m].Length; n++)
+                                {
+                                    stateVersion[l][m][n] = false;
+                                }
+                            }
+                            else
+                            {
+                                for (int n = 0; n < stateVersion[i][j].Length; n++)
+                                {
+                                    if (n != k)
+                                    {
+                                        stateVersion[l][m][n] = false;
+                                    }
+                                    else
+                                    {
+                                        stateVersion[i][j][k] = true;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
             _scrollPosition = EditorGUILayout.BeginScrollView(_scrollPosition);
             var index = 0;
             foreach (string key in _scopedData.Keys)
@@ -67,11 +123,18 @@ namespace com.snorlax.upm
                         if (_foldoutPackages[index][j])
                         {
                             EditorGUILayout.BeginVertical();
+                            int k = 0;
                             foreach (string version in _scopedData[key][pacakgeName])
                             {
                                 EditorGUILayout.BeginHorizontal();
                                 GUILayout.FlexibleSpace();
-                                EditorGUILayout.LabelField(version);
+                                _foldoutVersions[index][j][k] = EditorGUILayout.Toggle(version, _foldoutVersions[index][j][k]);
+                                if (_foldoutVersions[index][j][k])
+                                {
+                                    ResetState(_foldoutVersions, index, j, k);
+                                }
+
+                                ++k;
                                 EditorGUILayout.EndHorizontal();
                             }
 
