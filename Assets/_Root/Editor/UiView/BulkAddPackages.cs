@@ -1,10 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 using UnityEditor;
-using UnityEditor.PackageManager;
 using UnityEngine;
 
 namespace com.snorlax.upm
@@ -43,7 +39,6 @@ namespace com.snorlax.upm
             {
                 string keyRegistry = _scopedData.Keys.ToList()[i];
                 int numberPackageInScope = _scopedData[keyRegistry].Keys.Count;
-                Debug.Log(numberPackageInScope);
                 _foldoutPackages.Add(new bool[numberPackageInScope]);
                 _foldoutVersions.Add(new List<bool[]>(numberPackageInScope));
 
@@ -53,8 +48,6 @@ namespace com.snorlax.upm
                     _foldoutVersions[i].Add(new bool[_scopedData[keyRegistry][namePackage].Count]);
                 }
             }
-
-            Debug.Log("OnEnable");
         }
 
         private void OnGUI()
