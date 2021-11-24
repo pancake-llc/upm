@@ -1,7 +1,11 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using UnityEditor;
+using UnityEditor.PackageManager;
 using UnityEngine;
+using PackageInfo = UnityEditor.PackageManager.PackageInfo;
 
 namespace com.snorlax.upm
 {
@@ -22,6 +26,10 @@ namespace com.snorlax.upm
         private bool[] _foldoutScopes;
         private List<bool[]> _foldoutPackages; // scoped has many package
         private List<List<bool[]>> _foldoutVersions; //scope has manay package, packge has many version
+        private List<PackageInfo> _packageInfos = new List<PackageInfo>(); //local packages info (in package.json)
+        private string _scopedSelected;
+        private string _packageSelected;
+        private string _versionSelected;
 
         [MenuItem("Packages/Add packages (bulk)", false, 22)]
         internal static void ManageRegistries() { GetWindow<BulkAddPackages>(true, "Add packages", true); }
@@ -32,6 +40,12 @@ namespace com.snorlax.upm
             _scopedData = GithubResponse.GetAllPackages();
             int numberRegistry = _scopedData.Keys.Count;
             _foldoutScopes = new bool[numberRegistry];
+            // set default true for all scope to default is foldout
+            for (var i = 0; i < _foldoutScopes.Length; i++)
+            {
+                _foldoutScopes[i] = true;
+            }
+
             _foldoutPackages = new List<bool[]>(numberRegistry);
             _foldoutVersions = new List<List<bool[]>>(numberRegistry);
 
@@ -48,13 +62,16 @@ namespace com.snorlax.upm
                     _foldoutVersions[i].Add(new bool[_scopedData[keyRegistry][namePackage].Count]);
                 }
             }
+
+            FetchAllLocalPackageInfo();
         }
 
         private void OnGUI()
         {
-            void ResetState(List<List<bool[]>> stateVersion, int i, int j, int k)
+            // reset state foldout
+            void ResetState(IReadOnlyList<List<bool[]>> stateVersion, int i, int j, int k)
             {
-                for (int l = 0; l < stateVersion.Count; l++)
+                for (var l = 0; l < stateVersion.Count; l++)
                 {
                     if (l != i)
                     {
@@ -79,7 +96,7 @@ namespace com.snorlax.upm
                             }
                             else
                             {
-                                for (int n = 0; n < stateVersion[i][j].Length; n++)
+                                for (var n = 0; n < stateVersion[i][j].Length; n++)
                                 {
                                     if (n != k)
                                     {
@@ -110,20 +127,26 @@ namespace com.snorlax.upm
                     EditorGUILayout.BeginVertical();
 
                     var j = 0;
-                    foreach (string pacakgeName in _scopedData[key].Keys)
+                    foreach (string packageName in _scopedData[key].Keys)
                     {
-                        _foldoutPackages[index][j] = EditorGUILayout.Foldout(_foldoutPackages[index][j], pacakgeName, true);
+                        _foldoutPackages[index][j] = EditorGUILayout.Foldout(_foldoutPackages[index][j], packageName, true);
                         if (_foldoutPackages[index][j])
                         {
                             EditorGUILayout.BeginVertical();
                             int k = 0;
-                            foreach (string version in _scopedData[key][pacakgeName])
+                            foreach (string version in _scopedData[key][packageName])
                             {
                                 EditorGUILayout.BeginHorizontal();
                                 GUILayout.FlexibleSpace();
-                                _foldoutVersions[index][j][k] = EditorGUILayout.Toggle(version, _foldoutVersions[index][j][k]);
+                                string versionAndStatus = version;
+                                if (IsExistPackage(packageName, version)) versionAndStatus += " (Installed)";
+
+                                _foldoutVersions[index][j][k] = EditorGUILayout.Toggle(versionAndStatus, _foldoutVersions[index][j][k]);
                                 if (_foldoutVersions[index][j][k])
                                 {
+                                    _scopedSelected = key;
+                                    _packageSelected = packageName;
+                                    _versionSelected = version;
                                     ResetState(_foldoutVersions, index, j, k);
                                 }
 
@@ -147,57 +170,108 @@ namespace com.snorlax.upm
 
             EditorGUILayout.BeginHorizontal();
             GUILayout.FlexibleSpace();
-            if (GUILayout.Button("Install", GUILayout.Width(80)))
+
+            if (!string.IsNullOrEmpty(_packageSelected) && !string.IsNullOrEmpty(_versionSelected))
             {
-                AddPackages();
-                CloseWindow();
+                if (IsExistPackage(_packageSelected, _versionSelected))
+                {
+                    if (GUILayout.Button("Remove", GUILayout.Width(80)))
+                    {
+                        RemovePackage();
+                        CloseWindow();
+                    }
+                }
+
+                if (!IsExistPackage(_packageSelected, _versionSelected))
+                {
+                    if (GUILayout.Button("Install", GUILayout.Width(80)))
+                    {
+                        AddPackage();
+                        CloseWindow();
+                    }
+                }
             }
 
             EditorGUILayout.EndHorizontal();
         }
 
-        private void AddPackages()
+        private void AddPackage()
         {
-            // var result = "";
-            //
-            // var hasPackages = false;
-            //
-            // using (var reader = new StringReader(_packageList))
-            // {
-            //     string line;
-            //     while ((line = reader.ReadLine()) != null)
-            //     {
-            //         if (!string.IsNullOrEmpty(line))
-            //         {
-            //             var request = Client.Add(line);
-            //
-            //             while (!request.IsCompleted)
-            //             {
-            //                 Thread.Sleep(100);
-            //             }
-            //
-            //             if (request.Status == StatusCode.Success)
-            //             {
-            //                 result += "Imported: " + line + Environment.NewLine;
-            //             }
-            //             else
-            //             {
-            //                 result += "Cannot import " + line + ": " + request.Error.message + Environment.NewLine;
-            //             }
-            //
-            //             hasPackages = true;
-            //         }
-            //     }
-            // }
-            //
-            // if (hasPackages)
-            // {
-            //     EditorUtility.DisplayDialog("Added packages", "Packages added:" + Environment.NewLine + Environment.NewLine + result, "OK");
-            // }
-            // else
-            // {
-            //     EditorUtility.DisplayDialog("No packages entered", "No packages entered.", "OK");
-            // }
+            var result = "";
+
+            // com.org.package_name@0.2.1
+            var packageDependency = $"{_packageSelected}@{_versionSelected}";
+            if (string.IsNullOrEmpty(_packageSelected) || string.IsNullOrEmpty(_versionSelected))
+            {
+                EditorUtility.DisplayDialog("No package entered", "No package entered.", "OK");
+                return;
+            }
+
+            var request = Client.Add(packageDependency);
+
+            while (!request.IsCompleted)
+            {
+                Thread.Sleep(100);
+            }
+
+            if (request.Status == StatusCode.Success)
+            {
+                result += "Imported: " + packageDependency + Environment.NewLine;
+            }
+            else
+            {
+                result += "Cannot import " + packageDependency + ": " + request.Error.message + Environment.NewLine;
+            }
+
+            EditorUtility.DisplayDialog("Added package", "Package added:" + Environment.NewLine + Environment.NewLine + result, "OK");
+        }
+
+        private void RemovePackage()
+        {
+            var result = "";
+
+            // com.org.package_name
+            if (string.IsNullOrEmpty(_packageSelected))
+            {
+                EditorUtility.DisplayDialog("No package removed", "No packages have been removed.", "OK");
+                return;
+            }
+
+            var request = Client.Remove(_packageSelected);
+
+            while (!request.IsCompleted)
+            {
+                Thread.Sleep(100);
+            }
+
+            if (request.Status == StatusCode.Success)
+            {
+                result += "Removed: " + _packageSelected + Environment.NewLine;
+            }
+            else
+            {
+                result += "Cannot remove " + _packageSelected + ": " + request.Error.message + Environment.NewLine;
+            }
+
+            EditorUtility.DisplayDialog("Remove package", "Package removed:" + Environment.NewLine + Environment.NewLine + result, "OK");
+        }
+
+        private bool IsExistPackage(string package, string version)
+        {
+            if (_packageInfos == null || _packageInfos.Count == 0) FetchAllLocalPackageInfo();
+            return _packageInfos.FirstOrDefault(q => q.name == package && q.version == version) != null;
+        }
+
+        private void FetchAllLocalPackageInfo()
+        {
+            var request = Client.List();
+
+            while (!request.IsCompleted)
+            {
+                Thread.Sleep(100);
+            }
+
+            _packageInfos = request.Result.ToList();
         }
 
         private void CloseWindow()

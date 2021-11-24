@@ -1,5 +1,12 @@
 {
   "dependencies": {
+    "com.snorlax.external-dependency-manager": {
+      "version": "1.2.167",
+      "depth": 0,
+      "source": "registry",
+      "dependencies": {},
+      "url": "https://npm.pkg.github.com/@snorluxe"
+    },
     "com.snorlax.html-agility-pack": {
       "version": "1.11.38",
       "depth": 0,

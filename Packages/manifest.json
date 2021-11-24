@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "com.snorlax.external-dependency-manager": "1.2.167",
     "com.snorlax.html-agility-pack": "1.11.38",
     "com.snorlax.semver": "0.3.5",
     "com.snorlax.tomlyn": "0.2.0",
