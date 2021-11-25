@@ -20,4 +20,15 @@ namespace com.snorlax.upm
         public string package_html_url;
         public string description;
     }
+
+    public class VersionPackage
+    {
+        public string scope;
+        public string packageName;
+        public string version;
+
+        public int scopeIndex;
+        public int packageIndex;
+        public int versionIndex;
+    }
 }

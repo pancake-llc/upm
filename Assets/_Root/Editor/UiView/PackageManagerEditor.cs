@@ -19,20 +19,18 @@ namespace com.snorlax.upm
     //         internal static void ManageRegistries() { Client.Add("com.halodi.halodi-unity-package-creator"); }
     //     }
     // }
-    public class BulkAddPackages : EditorWindow
+    public class PackageManagerEditor : EditorWindow
     {
         private Vector2 _scrollPosition;
         private Dictionary<string, Dictionary<string, List<string>>> _scopedData = new();
         private bool[] _foldoutScopes;
         private List<bool[]> _foldoutPackages; // scoped has many package
         private List<List<bool[]>> _foldoutVersions; //scope has manay package, packge has many version
-        private List<PackageInfo> _packageInfos = new List<PackageInfo>(); //local packages info (in package.json)
-        private string _scopedSelected;
-        private string _packageSelected;
-        private string _versionSelected;
+        private List<PackageInfo> _packageInfos = new(); //local packages info (in package.json)
+        private VersionPackage _versionPackageSelected;
 
-        [MenuItem("Packages/Add packages (bulk)", false, 22)]
-        internal static void ManageRegistries() { GetWindow<BulkAddPackages>(true, "Add packages", true); }
+        [MenuItem("Packages/Manage Pacakges &1", false, 22)]
+        internal static void ManageRegistries() { GetWindow<PackageManagerEditor>(true, "Add packages", true); }
 
         private void OnEnable()
         {
@@ -68,6 +66,15 @@ namespace com.snorlax.upm
 
         private void OnGUI()
         {
+            void DrawLine()
+            {
+                EditorGUILayout.Space(4);
+                var rect = EditorGUILayout.GetControlRect(false, 1);
+                rect.height = 1;
+                EditorGUI.DrawRect(rect, new Color(0.09f, 0.11f, 0.16f));
+                EditorGUILayout.Space();
+            }
+
             // reset state foldout
             void ResetState(IReadOnlyList<List<bool[]>> stateVersion, int i, int j, int k)
             {
@@ -113,6 +120,13 @@ namespace com.snorlax.upm
                 }
             }
 
+            void CheckClearInfoVersionSelected()
+            {
+                if (_versionPackageSelected == null) return;
+                if (!_foldoutVersions[_versionPackageSelected.scopeIndex][_versionPackageSelected.packageIndex][_versionPackageSelected.versionIndex])
+                    _versionPackageSelected = null;
+            }
+
             _scrollPosition = EditorGUILayout.BeginScrollView(_scrollPosition);
             var index = 0;
             foreach (string key in _scopedData.Keys)
@@ -144,9 +158,15 @@ namespace com.snorlax.upm
                                 _foldoutVersions[index][j][k] = EditorGUILayout.Toggle(versionAndStatus, _foldoutVersions[index][j][k]);
                                 if (_foldoutVersions[index][j][k])
                                 {
-                                    _scopedSelected = key;
-                                    _packageSelected = packageName;
-                                    _versionSelected = version;
+                                    _versionPackageSelected = new VersionPackage
+                                    {
+                                        scope = key,
+                                        packageName = packageName,
+                                        version = version,
+                                        scopeIndex = index,
+                                        packageIndex = j,
+                                        versionIndex = k
+                                    };
                                     ResetState(_foldoutVersions, index, j, k);
                                 }
 
@@ -156,6 +176,8 @@ namespace com.snorlax.upm
 
                             EditorGUILayout.EndVertical();
                         }
+
+                        DrawLine();
 
                         ++j;
                     }
@@ -167,27 +189,34 @@ namespace com.snorlax.upm
             }
 
             EditorGUILayout.EndScrollView();
-
+            CheckClearInfoVersionSelected();
             EditorGUILayout.BeginHorizontal();
             GUILayout.FlexibleSpace();
 
-            if (!string.IsNullOrEmpty(_packageSelected) && !string.IsNullOrEmpty(_versionSelected))
+            if (_versionPackageSelected != null)
             {
-                if (IsExistPackage(_packageSelected, _versionSelected))
+                bool isExistPack = IsExistPackage(_versionPackageSelected.packageName, _versionPackageSelected.version);
+                switch (isExistPack)
                 {
-                    if (GUILayout.Button("Remove", GUILayout.Width(80)))
+                    case true:
                     {
-                        RemovePackage();
-                        CloseWindow();
-                    }
-                }
+                        if (GUILayout.Button("Remove", GUILayout.Width(80)))
+                        {
+                            RemovePackage();
+                            CloseWindow();
+                        }
 
-                if (!IsExistPackage(_packageSelected, _versionSelected))
-                {
-                    if (GUILayout.Button("Install", GUILayout.Width(80)))
+                        break;
+                    }
+                    case false:
                     {
-                        AddPackage();
-                        CloseWindow();
+                        if (GUILayout.Button("Install", GUILayout.Width(80)))
+                        {
+                            AddPackage();
+                            CloseWindow();
+                        }
+
+                        break;
                     }
                 }
             }
@@ -200,8 +229,8 @@ namespace com.snorlax.upm
             var result = "";
 
             // com.org.package_name@0.2.1
-            var packageDependency = $"{_packageSelected}@{_versionSelected}";
-            if (string.IsNullOrEmpty(_packageSelected) || string.IsNullOrEmpty(_versionSelected))
+            var packageDependency = $"{_versionPackageSelected.packageName}@{_versionPackageSelected.version}";
+            if (_versionPackageSelected == null)
             {
                 EditorUtility.DisplayDialog("No package entered", "No package entered.", "OK");
                 return;
@@ -231,13 +260,13 @@ namespace com.snorlax.upm
             var result = "";
 
             // com.org.package_name
-            if (string.IsNullOrEmpty(_packageSelected))
+            if (_versionPackageSelected == null)
             {
                 EditorUtility.DisplayDialog("No package removed", "No packages have been removed.", "OK");
                 return;
             }
 
-            var request = Client.Remove(_packageSelected);
+            var request = Client.Remove(_versionPackageSelected.packageName);
 
             while (!request.IsCompleted)
             {
@@ -246,11 +275,11 @@ namespace com.snorlax.upm
 
             if (request.Status == StatusCode.Success)
             {
-                result += "Removed: " + _packageSelected + Environment.NewLine;
+                result += "Removed: " + _versionPackageSelected.packageName + Environment.NewLine;
             }
             else
             {
-                result += "Cannot remove " + _packageSelected + ": " + request.Error.message + Environment.NewLine;
+                result += "Cannot remove " + _versionPackageSelected.packageName + ": " + request.Error.message + Environment.NewLine;
             }
 
             EditorUtility.DisplayDialog("Remove package", "Package removed:" + Environment.NewLine + Environment.NewLine + result, "OK");
