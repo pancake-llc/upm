@@ -143,7 +143,8 @@ namespace com.snorlax.upm
                     var j = 0;
                     foreach (string packageName in _scopedData[key].Keys)
                     {
-                        _foldoutPackages[index][j] = EditorGUILayout.Foldout(_foldoutPackages[index][j], packageName, true);
+                        string packageInstalled = packageName;
+                        _foldoutPackages[index][j] = EditorGUILayout.Foldout(_foldoutPackages[index][j], packageInstalled, true);
                         if (_foldoutPackages[index][j])
                         {
                             EditorGUILayout.BeginVertical();
@@ -153,9 +154,18 @@ namespace com.snorlax.upm
                                 EditorGUILayout.BeginHorizontal();
                                 GUILayout.FlexibleSpace();
                                 string versionAndStatus = version;
-                                if (IsExistPackage(packageName, version)) versionAndStatus += " (Installed)";
+                                if (IsExistPackage(packageName, version))
+                                {
+                                    versionAndStatus += " (Installed)";
+                                    GUI.contentColor = new Color(0.35f, 1f, 0.45f);
+                                }
+                                else
+                                {
+                                    GUI.contentColor = Color.white;
+                                }
 
                                 _foldoutVersions[index][j][k] = EditorGUILayout.Toggle(versionAndStatus, _foldoutVersions[index][j][k]);
+                                GUI.contentColor = Color.white;
                                 if (_foldoutVersions[index][j][k])
                                 {
                                     _versionPackageSelected = new VersionPackage
