@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 // ReSharper disable InconsistentNaming
 namespace com.snorlax.upm
@@ -10,6 +11,7 @@ namespace com.snorlax.upm
         public string name;
         public string package_type;
         public int version_count;
+        public Repository repository;
     }
 
     [Serializable]
@@ -21,6 +23,7 @@ namespace com.snorlax.upm
         public string description;
     }
 
+    [Serializable]
     public class VersionPackage
     {
         public string scope;
@@ -30,5 +33,30 @@ namespace com.snorlax.upm
         public int scopeIndex;
         public int packageIndex;
         public int versionIndex;
+    }
+
+    [Serializable]
+    public class Repository
+    {
+        public string name;
+        public string full_name;
+        public string description;
+        public bool @private;
+    }
+
+    [Serializable]
+    public class  GithubPackage
+    {
+        public string id;
+        public string name;
+        public string description;
+        public List<string> versions;
+    }
+
+    [Serializable]
+    public class GithubOrganization
+    {
+        public string scope;
+        public List<GithubPackage> packages;
     }
 }

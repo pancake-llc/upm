@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading;
 using UnityEditor;
 using UnityEditor.PackageManager;
@@ -22,7 +24,7 @@ namespace com.snorlax.upm
     public class PackageManagerEditor : EditorWindow
     {
         private Vector2 _scrollPosition;
-        private Dictionary<string, Dictionary<string, List<string>>> _scopedData = new();
+        private List<GithubOrganization> _orgs = new();
         private bool[] _foldoutScopes;
         private List<bool[]> _foldoutPackages; // scoped has many package
         private List<List<bool[]>> _foldoutVersions; //scope has manay package, packge has many version
@@ -34,30 +36,27 @@ namespace com.snorlax.upm
 
         private void OnEnable()
         {
-            minSize = new Vector2(640, 320);
-            _scopedData = GithubResponse.GetAllPackages();
-            int numberRegistry = _scopedData.Keys.Count;
-            _foldoutScopes = new bool[numberRegistry];
+            minSize = new Vector2(500, 480);
+            _orgs = GithubResponse.GetAllPackages();
+            _foldoutScopes = new bool[_orgs.Count];
             // set default true for all scope to default is foldout
             for (var i = 0; i < _foldoutScopes.Length; i++)
             {
                 _foldoutScopes[i] = true;
             }
 
-            _foldoutPackages = new List<bool[]>(numberRegistry);
-            _foldoutVersions = new List<List<bool[]>>(numberRegistry);
+            _foldoutPackages = new List<bool[]>(_orgs.Count);
+            _foldoutVersions = new List<List<bool[]>>(_orgs.Count);
 
-            for (var i = 0; i < numberRegistry; i++)
+            for (var i = 0; i < _orgs.Count; i++)
             {
-                string keyRegistry = _scopedData.Keys.ToList()[i];
-                int numberPackageInScope = _scopedData[keyRegistry].Keys.Count;
-                _foldoutPackages.Add(new bool[numberPackageInScope]);
-                _foldoutVersions.Add(new List<bool[]>(numberPackageInScope));
+                var org = _orgs[i];
+                _foldoutPackages.Add(new bool[org.packages.Count]);
+                _foldoutVersions.Add(new List<bool[]>(org.packages.Count));
 
-                for (var j = 0; j < numberPackageInScope; j++)
+                for (var j = 0; j < org.packages.Count; j++)
                 {
-                    string namePackage = _scopedData[keyRegistry].Keys.ToList()[j];
-                    _foldoutVersions[i].Add(new bool[_scopedData[keyRegistry][namePackage].Count]);
+                    _foldoutVersions[i].Add(new bool[org.packages[i].versions.Count]);
                 }
             }
 
@@ -129,10 +128,10 @@ namespace com.snorlax.upm
 
             _scrollPosition = EditorGUILayout.BeginScrollView(_scrollPosition);
             var index = 0;
-            foreach (string key in _scopedData.Keys)
+            foreach (var org in _orgs)
             {
-                string scopeTitle = key;
-                if (key.Equals("snorluxe")) scopeTitle = "Snorlax";
+                string scopeTitle = org.scope;
+                if (scopeTitle.Equals("snorluxe")) scopeTitle = "Snorlax";
                 _foldoutScopes[index] = EditorGUILayout.Foldout(_foldoutScopes[index], scopeTitle, true);
                 EditorGUILayout.Separator();
 
@@ -141,20 +140,19 @@ namespace com.snorlax.upm
                     EditorGUILayout.BeginVertical();
 
                     var j = 0;
-                    foreach (string packageName in _scopedData[key].Keys)
+                    foreach (var package in org.packages)
                     {
-                        string packageInstalled = packageName;
-                        _foldoutPackages[index][j] = EditorGUILayout.Foldout(_foldoutPackages[index][j], packageInstalled, true);
+                        _foldoutPackages[index][j] = EditorGUILayout.Foldout(_foldoutPackages[index][j], ValidatePackageDisplay(package.name), true);
                         if (_foldoutPackages[index][j])
                         {
                             EditorGUILayout.BeginVertical();
                             int k = 0;
-                            foreach (string version in _scopedData[key][packageName])
+                            foreach (string version in package.versions)
                             {
                                 EditorGUILayout.BeginHorizontal();
                                 GUILayout.FlexibleSpace();
                                 string versionAndStatus = version;
-                                if (IsExistPackage(packageName, version))
+                                if (IsExistPackage(package.id, version))
                                 {
                                     versionAndStatus += " (Installed)";
                                     GUI.contentColor = new Color(0.35f, 1f, 0.45f);
@@ -170,8 +168,8 @@ namespace com.snorlax.upm
                                 {
                                     _versionPackageSelected = new VersionPackage
                                     {
-                                        scope = key,
-                                        packageName = packageName,
+                                        scope = org.scope,
+                                        packageName = package.id,
                                         version = version,
                                         scopeIndex = index,
                                         packageIndex = j,
@@ -317,6 +315,13 @@ namespace com.snorlax.upm
         {
             Close();
             GUIUtility.ExitGUI();
+        }
+
+        private string ValidatePackageDisplay(string name)
+        {
+            name = name.Replace('-', ' ');
+            var tInfo = new CultureInfo("en-US", false).TextInfo;
+            return tInfo.ToTitleCase(name);
         }
     }
 }

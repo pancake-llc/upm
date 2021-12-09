@@ -11,8 +11,10 @@ namespace com.snorlax.upm
 {
     public static class GithubResponse
     {
-        public static Dictionary<string, Dictionary<string, List<string>>> GetAllPackages()
+        public static List<GithubOrganization> GetAllPackages()
         {
+            var orgs = new List<GithubOrganization>();
+
             var credentialSet = new List<NpmCredential>();
             if (File.Exists(CredentialManager.UpmconfigFile))
             {
@@ -43,13 +45,11 @@ namespace com.snorlax.upm
                 }
             }
 
-            var dictScoped = new Dictionary<string, Dictionary<string, List<string>>>();
-
             foreach (var credential in credentialSet)
             {
-                var dictPackage = new Dictionary<string, List<string>>();
+                var orgPacakges = new List<GithubPackage>();
                 string scoped = credential.url.Split('@')[1];
-                dictScoped.Add(scoped, dictPackage);
+                orgs.Add(new GithubOrganization() { scope = scoped, packages = orgPacakges });
 
                 using var client = new WebClient();
                 var urlRequestPackage = $"https://api.github.com/orgs/{scoped}/packages?package_type=npm";
@@ -65,14 +65,20 @@ namespace com.snorlax.upm
                     clientVersion.Headers.Add(HttpRequestHeader.Authorization, $"token {credential.token}");
                     clientVersion.Headers.Add(HttpRequestHeader.UserAgent, "request");
                     var urlRequestVersion = $"https://api.github.com/orgs/{scoped}/packages/npm/{package.name}/versions";
-                    
+
                     string versionResult = clientVersion.DownloadString(urlRequestVersion);
                     var versions = JsonConvert.DeserializeObject<List<PackageVersion>>(versionResult);
-                    dictPackage.Add(package.name, versions.Select(_ => _.name).ToList());
+                    orgPacakges.Add(new GithubPackage()
+                    {
+                        id = package.name,
+                        name = package.repository.name,
+                        description = package.repository.description,
+                        versions = versions.Select(_ => _.name).ToList()
+                    });
                 }
             }
 
-            return dictScoped;
+            return orgs;
         }
     }
 }
