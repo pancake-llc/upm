@@ -1,5 +1,5 @@
 {
-    "name": "snorlax@upm.editor",
+    "name": "snorlax@semver.editor",
     "rootNamespace": "",
     "references": [
         "GUID:f7e34d39392ca374cba6fe52c27d3d20"

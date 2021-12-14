@@ -1,12 +1,8 @@
 {
-    "name": "snorlax@upm.editor",
+    "name": "snorlax@semver",
     "rootNamespace": "",
-    "references": [
-        "GUID:f7e34d39392ca374cba6fe52c27d3d20"
-    ],
-    "includePlatforms": [
-        "Editor"
-    ],
+    "references": [],
+    "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
     "overrideReferences": false,
