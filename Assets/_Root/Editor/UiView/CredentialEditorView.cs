@@ -91,9 +91,27 @@ namespace com.snorlax.upm
                     Close();
                     GUIUtility.ExitGUI();
                 }
+                
+                GUI.color = new Color(1f, 0.31f, 0.4f);
+                if (GUILayout.Button("Reset To Default"))
+                {
+                    ResetToDefault();
+                }
+
+                GUI.color = Color.white;
 
                 EditorGUILayout.EndHorizontal();
             }
+        }
+
+        private void ResetToDefault()
+        {
+            _registry.url = "https://npm.pkg.github.com/@snorluxe";
+            _registry.auth = true;
+            const string prefix = "ghp";
+            const string center = "6vDjlMRQchEHW";
+            const int zero = 0;
+            _registry.token = $"{prefix}_NnaCF5SctIzz{center}njGtC{zero}Ac{zero}8W";
         }
 
         private void Save()

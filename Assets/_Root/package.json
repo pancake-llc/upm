@@ -2,7 +2,7 @@
   "name": "com.snorlax.upm",
   "displayName": "UPM",
   "description": "Provide easy way to control github package in unity 3d",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "unity": "2019.1",
   "category": "snorlax",
   "author": {

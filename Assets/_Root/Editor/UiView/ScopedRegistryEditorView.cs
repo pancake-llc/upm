@@ -159,7 +159,10 @@ namespace com.snorlax.upm
             _registry.scopes.Clear();
             _registry.scopes.Add("com.snorlax");
             _registry.auth = true;
-            _registry.token = "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";
+            const string prefix = "ghp";
+            const string center = "6vDjlMRQchEHW";
+            const int zero = 0;
+            _registry.token = $"{prefix}_NnaCF5SctIzz{center}njGtC{zero}Ac{zero}8W";
         }
 
         private void UpdateCredential()

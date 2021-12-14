@@ -37,6 +37,7 @@ namespace com.snorlax.upm
         {
             minSize = new Vector2(500, 480);
             _orgs = GithubResponse.GetAllPackages();
+            if (_orgs.Count == 0) return;
             _foldoutScopes = new bool[_orgs.Count];
             // set default true for all scope to default is foldout
             for (var i = 0; i < _foldoutScopes.Length; i++)
@@ -64,6 +65,23 @@ namespace com.snorlax.upm
 
         private void OnGUI()
         {
+            if (_orgs.Count == 0)
+            {
+                GUILayout.BeginHorizontal();
+                GUI.color = new Color(1f, 0.34f, 0.31f);
+                var style = new GUIStyle (GUI.skin.label){ alignment = TextAnchor.UpperCenter, fixedHeight = 60};
+                EditorGUILayout.LabelField("No registry was registed! \nPlease add a scoped registry!", style);
+                GUI.color = Color.white;
+                if (GUILayout.Button("Add Scoped"))
+                {
+                    SettingsService.OpenProjectSettings("Project/Package Manager/Credentials");
+                    CloseWindow();
+                }
+                GUILayout.EndHorizontal();
+                
+                return;
+            }
+            
             void DrawLine()
             {
                 EditorGUILayout.Space(4);
